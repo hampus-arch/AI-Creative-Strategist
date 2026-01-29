@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMockSettings, setMockSettings } from "@/lib/mock-data";
-import { validateApiKey } from "@/lib/openai";
-import { validateGeminiApiKey } from "@/lib/gemini";
 
 // GET user settings
 export async function GET() {
@@ -21,30 +19,30 @@ export async function GET() {
 // POST update settings
 export async function POST(req: NextRequest) {
   try {
-    const { apiKey, geminiApiKey, preferredModel } = await req.json();
+    const { apiKey, geminiApiKey, preferredModel, skipValidation } = await req.json();
 
-    // If updating OpenAI API key, validate it first
+    // Basic format validation only (no API calls that might fail)
     if (apiKey) {
-      const isValid = await validateApiKey(apiKey);
-      if (!isValid) {
+      // OpenAI keys start with "sk-" and are at least 20 chars
+      if (!apiKey.startsWith("sk-") || apiKey.length < 20) {
         return NextResponse.json(
-          { error: "Invalid OpenAI API key" },
+          { error: "Invalid OpenAI API key format. Should start with 'sk-'" },
           { status: 400 }
         );
       }
     }
 
-    // If updating Gemini API key, validate it
     if (geminiApiKey) {
-      const isValid = await validateGeminiApiKey(geminiApiKey);
-      if (!isValid) {
+      // Gemini keys start with "AIza" and are around 39 chars
+      if (!geminiApiKey.startsWith("AIza") || geminiApiKey.length < 30) {
         return NextResponse.json(
-          { error: "Invalid Gemini API key" },
+          { error: "Invalid Gemini API key format. Should start with 'AIza'" },
           { status: 400 }
         );
       }
     }
 
+    // Save the keys
     setMockSettings({ apiKey, geminiApiKey, preferredModel });
     return NextResponse.json({ success: true });
   } catch (error) {

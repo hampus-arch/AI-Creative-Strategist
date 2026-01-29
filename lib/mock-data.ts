@@ -48,7 +48,7 @@ export function getMockBrand(id: string): MockBrand | undefined {
   return mockBrands.find((b) => b.id === id);
 }
 
-// Mock settings
+// Mock settings - also check environment variables as fallback
 let mockSettings = {
   openaiApiKey: "",
   geminiApiKey: "",
@@ -56,12 +56,19 @@ let mockSettings = {
 };
 
 export function getMockSettings() {
+  // Check environment variables as fallback (for Vercel deployment)
+  const envOpenAIKey = process.env.OPENAI_API_KEY || "";
+  const envGeminiKey = process.env.GEMINI_API_KEY || "";
+  
+  const openaiKey = mockSettings.openaiApiKey || envOpenAIKey;
+  const geminiKey = mockSettings.geminiApiKey || envGeminiKey;
+  
   return {
-    hasApiKey: !!mockSettings.openaiApiKey,
-    hasGeminiKey: !!mockSettings.geminiApiKey,
+    hasApiKey: !!openaiKey,
+    hasGeminiKey: !!geminiKey,
     preferredModel: mockSettings.preferredModel,
-    apiKey: mockSettings.openaiApiKey,
-    geminiApiKey: mockSettings.geminiApiKey,
+    apiKey: openaiKey,
+    geminiApiKey: geminiKey,
   };
 }
 

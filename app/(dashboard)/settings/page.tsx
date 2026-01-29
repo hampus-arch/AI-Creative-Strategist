@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Eye, EyeOff, Key, Bot, CheckCircle2, Loader2, Image as ImageIcon } from "lucide-react";
+import { Eye, EyeOff, Key, Bot, CheckCircle2, Loader2, Image as ImageIcon, AlertCircle } from "lucide-react";
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
@@ -173,6 +173,36 @@ export default function SettingsPage() {
           Configure your API keys and preferences
         </p>
       </div>
+
+      {/* Vercel Environment Variables Info */}
+      <Card className="bg-amber-500/10 border-amber-500/30">
+        <CardContent className="p-4">
+          <div className="flex gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-500 font-medium text-sm">
+                For Vercel Deployment
+              </p>
+              <p className="text-amber-400/80 text-xs mt-1">
+                API keys entered here won&apos;t persist between sessions on Vercel. 
+                For permanent keys, add environment variables in your{" "}
+                <a 
+                  href="https://vercel.com/docs/environment-variables" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="underline hover:text-amber-300"
+                >
+                  Vercel project settings
+                </a>:
+              </p>
+              <ul className="text-amber-400/80 text-xs mt-2 space-y-1 list-disc list-inside">
+                <li><code className="bg-amber-500/20 px-1 rounded">OPENAI_API_KEY</code> - Your OpenAI key</li>
+                <li><code className="bg-amber-500/20 px-1 rounded">GEMINI_API_KEY</code> - Your Gemini key</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* OpenAI API Key Card */}
       <Card className="bg-neutral-900 border-neutral-800">
