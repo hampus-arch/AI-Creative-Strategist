@@ -2,24 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   Building2,
   Sparkles,
   Settings,
-  LogOut,
-  ChevronDown,
 } from "lucide-react";
 
 const navigation = [
@@ -31,7 +21,6 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
 
   return (
     <div className="flex flex-col w-64 bg-neutral-900 border-r border-neutral-800">
@@ -71,44 +60,24 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User menu */}
+      {/* User display */}
       <div className="p-4 border-t border-neutral-800">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-neutral-400 hover:text-white hover:bg-neutral-800"
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-orange-500/20 text-orange-500 text-sm">
-                  {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-white truncate">
-                  {session?.user?.name || session?.user?.email}
-                </p>
-              </div>
-              <ChevronDown className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-neutral-900 border-neutral-800">
-            <DropdownMenuItem asChild>
-              <Link href="/settings" className="cursor-pointer">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-neutral-800" />
-            <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-red-400 focus:text-red-400 cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-neutral-400 hover:text-white hover:bg-neutral-800 cursor-default"
+          disabled
+        >
+          <Avatar className="w-8 h-8">
+            <AvatarFallback className="bg-orange-500/20 text-orange-500 text-sm">
+              D
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-medium text-white truncate">
+              Demo Mode
+            </p>
+          </div>
+        </Button>
       </div>
     </div>
   );

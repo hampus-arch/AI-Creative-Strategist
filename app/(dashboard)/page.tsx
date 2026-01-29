@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FrameworkPipeline } from "@/components/framework-pipeline";
@@ -16,7 +15,6 @@ interface Brand {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
   const [selectedPhase, setSelectedPhase] = useState<FrameworkPhase>("INTERRUPT");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [hasApiKey, setHasApiKey] = useState(false);
@@ -51,7 +49,7 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">
-          Welcome{session?.user?.name ? `, ${session.user.name}` : " back"}!
+          Welcome to Creative Strategist!
         </h1>
         <p className="text-neutral-400 mt-1">
           Generate winning ad content with the Orange Juice Creative Framework
