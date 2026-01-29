@@ -50,20 +50,30 @@ export function getMockBrand(id: string): MockBrand | undefined {
 // Mock settings
 let mockSettings = {
   openaiApiKey: "",
+  geminiApiKey: "",
   preferredModel: "gpt-4o",
 };
 
 export function getMockSettings() {
   return {
     hasApiKey: !!mockSettings.openaiApiKey,
+    hasGeminiKey: !!mockSettings.geminiApiKey,
     preferredModel: mockSettings.preferredModel,
     apiKey: mockSettings.openaiApiKey,
+    geminiApiKey: mockSettings.geminiApiKey,
   };
 }
 
-export function setMockSettings(settings: { apiKey?: string; preferredModel?: string }) {
+export function setMockSettings(settings: { 
+  apiKey?: string; 
+  geminiApiKey?: string;
+  preferredModel?: string;
+}) {
   if (settings.apiKey !== undefined) {
     mockSettings.openaiApiKey = settings.apiKey;
+  }
+  if (settings.geminiApiKey !== undefined) {
+    mockSettings.geminiApiKey = settings.geminiApiKey;
   }
   if (settings.preferredModel !== undefined) {
     mockSettings.preferredModel = settings.preferredModel;

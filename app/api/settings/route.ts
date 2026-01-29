@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMockSettings, setMockSettings } from "@/lib/mock-data";
 import { validateApiKey } from "@/lib/openai";
+import { validateGeminiApiKey } from "@/lib/gemini";
 
 // GET user settings
 export async function GET() {
@@ -8,6 +9,7 @@ export async function GET() {
     const settings = getMockSettings();
     return NextResponse.json({
       hasApiKey: settings.hasApiKey,
+      hasGeminiKey: settings.hasGeminiKey,
       preferredModel: settings.preferredModel,
     });
   } catch (error) {
@@ -19,20 +21,31 @@ export async function GET() {
 // POST update settings
 export async function POST(req: NextRequest) {
   try {
-    const { apiKey, preferredModel } = await req.json();
+    const { apiKey, geminiApiKey, preferredModel } = await req.json();
 
-    // If updating API key, validate it first
+    // If updating OpenAI API key, validate it first
     if (apiKey) {
       const isValid = await validateApiKey(apiKey);
       if (!isValid) {
         return NextResponse.json(
-          { error: "Invalid API key" },
+          { error: "Invalid OpenAI API key" },
           { status: 400 }
         );
       }
     }
 
-    setMockSettings({ apiKey, preferredModel });
+    // If updating Gemini API key, validate it
+    if (geminiApiKey) {
+      const isValid = await validateGeminiApiKey(geminiApiKey);
+      if (!isValid) {
+        return NextResponse.json(
+          { error: "Invalid Gemini API key" },
+          { status: 400 }
+        );
+      }
+    }
+
+    setMockSettings({ apiKey, geminiApiKey, preferredModel });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating settings:", error);

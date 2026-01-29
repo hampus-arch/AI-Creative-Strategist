@@ -19,12 +19,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Eye, EyeOff, Key, Bot, CheckCircle2, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Key, Bot, CheckCircle2, Loader2, Image as ImageIcon } from "lucide-react";
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const [isSavingGemini, setIsSavingGemini] = useState(false);
+  
   const [preferredModel, setPreferredModel] = useState("gpt-4o");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +46,7 @@ export default function SettingsPage() {
       const response = await fetch("/api/settings");
       const data = await response.json();
       setHasApiKey(data.hasApiKey);
+      setHasGeminiKey(data.hasGeminiKey);
       setPreferredModel(data.preferredModel || "gpt-4o");
       
       if (data.hasApiKey) {
@@ -88,7 +95,7 @@ export default function SettingsPage() {
         return;
       }
 
-      toast.success("API key saved successfully");
+      toast.success("OpenAI API key saved successfully");
       setHasApiKey(true);
       setApiKey("");
       fetchModels();
@@ -96,6 +103,37 @@ export default function SettingsPage() {
       toast.error("Failed to save API key");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveGeminiKey = async () => {
+    if (!geminiApiKey.trim()) {
+      toast.error("Please enter a Gemini API key");
+      return;
+    }
+
+    setIsSavingGemini(true);
+    try {
+      const response = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ geminiApiKey }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to save Gemini API key");
+        return;
+      }
+
+      toast.success("Gemini API key saved successfully");
+      setHasGeminiKey(true);
+      setGeminiApiKey("");
+    } catch {
+      toast.error("Failed to save Gemini API key");
+    } finally {
+      setIsSavingGemini(false);
     }
   };
 
@@ -132,11 +170,11 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-3xl font-bold text-white">Settings</h1>
         <p className="text-neutral-400 mt-1">
-          Configure your API key and preferences
+          Configure your API keys and preferences
         </p>
       </div>
 
-      {/* API Key Card */}
+      {/* OpenAI API Key Card */}
       <Card className="bg-neutral-900 border-neutral-800">
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -144,7 +182,7 @@ export default function SettingsPage() {
             <CardTitle className="text-white">OpenAI API Key</CardTitle>
           </div>
           <CardDescription className="text-neutral-400">
-            Connect your OpenAI account to generate content
+            For content generation (hooks, scripts, analysis)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -152,7 +190,7 @@ export default function SettingsPage() {
             <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <CheckCircle2 className="w-5 h-5 text-green-500" />
               <span className="text-green-500 text-sm">
-                API key is configured
+                OpenAI API key is configured
               </span>
             </div>
           )}
@@ -204,6 +242,80 @@ export default function SettingsPage() {
                 className="text-orange-500 hover:underline"
               >
                 platform.openai.com
+              </a>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Gemini API Key Card */}
+      <Card className="bg-neutral-900 border-neutral-800">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-blue-500" />
+            <CardTitle className="text-white">Google Gemini API Key</CardTitle>
+          </div>
+          <CardDescription className="text-neutral-400">
+            For AI image generation (Imagen 3)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {hasGeminiKey && (
+            <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <span className="text-green-500 text-sm">
+                Gemini API key is configured
+              </span>
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="geminiKey" className="text-neutral-300">
+              {hasGeminiKey ? "Update Gemini Key" : "Enter Gemini Key"}
+            </Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="geminiKey"
+                  type={showGeminiKey ? "text" : "password"}
+                  placeholder="AIza..."
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  className="bg-neutral-800 border-neutral-700 text-white pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGeminiKey(!showGeminiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                >
+                  {showGeminiKey ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <Button
+                onClick={handleSaveGeminiKey}
+                disabled={isSavingGemini}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                {isSavingGemini ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-neutral-500">
+              Get your API key from{" "}
+              <a
+                href="https://aistudio.google.com/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                aistudio.google.com
               </a>
             </p>
           </div>

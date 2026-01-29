@@ -38,7 +38,10 @@ import {
   Building2,
   RefreshCw,
   Lightbulb,
+  Image as ImageIcon,
 } from "lucide-react";
+import { GenerateImageDialog } from "@/components/generate-image-dialog";
+import { addMockAd } from "@/lib/mock-data";
 
 interface Brand {
   id: string;
@@ -69,9 +72,15 @@ function GeneratePageContent() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  
+  // Image generation state
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [selectedConcept, setSelectedConcept] = useState("");
+  const [hasGeminiKey, setHasGeminiKey] = useState(false);
 
   useEffect(() => {
     fetchBrands();
+    checkGeminiKey();
   }, []);
 
   useEffect(() => {
@@ -85,6 +94,16 @@ function GeneratePageContent() {
       setBrands(data.brands || []);
     } catch {
       console.error("Failed to fetch brands");
+    }
+  };
+
+  const checkGeminiKey = async () => {
+    try {
+      const response = await fetch("/api/settings");
+      const data = await response.json();
+      setHasGeminiKey(data.hasGeminiKey || false);
+    } catch {
+      console.error("Failed to check Gemini key");
     }
   };
 
@@ -192,6 +211,51 @@ function GeneratePageContent() {
     setMessages([]);
     setSelectedPrompt(null);
     setInput("");
+  };
+
+  const handleGenerateImage = (content: string) => {
+    // Extract a meaningful hook/concept from the content
+    // Take the first 200 characters or first paragraph
+    const concept = content.split('\n')[0].slice(0, 200);
+    setSelectedConcept(concept);
+    setImageDialogOpen(true);
+  };
+
+  const handleSaveToLibrary = async (imageData: string, prompt: string) => {
+    try {
+      // Save to ad library via API
+      const response = await fetch("/api/ads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandName: selectedBrand?.name || "Generated",
+          brandId: selectedBrandId || undefined,
+          adCopy: selectedConcept,
+          hook: selectedConcept.slice(0, 100),
+          format: "image",
+          frameworkPhase: selectedPhase,
+          tags: ["ai-generated", selectedPhase.toLowerCase()],
+          imageData: imageData,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Image saved to Ad Library!");
+      }
+    } catch {
+      // Fallback: save locally using mock function
+      addMockAd({
+        brandName: selectedBrand?.name || "Generated",
+        brandId: selectedBrandId || undefined,
+        adCopy: selectedConcept,
+        hook: selectedConcept.slice(0, 100),
+        format: "image",
+        frameworkPhase: selectedPhase,
+        tags: ["ai-generated", selectedPhase.toLowerCase()],
+        imageData: imageData,
+      });
+      toast.success("Image saved to Ad Library!");
+    }
   };
 
   const phaseInfo = FRAMEWORK_PHASES.find((p) => p.id === selectedPhase);
@@ -366,12 +430,13 @@ function GeneratePageContent() {
                       {message.content}
                     </div>
                     {message.role === "assistant" && message.content && (
-                      <div className="flex justify-end mt-2">
+                      <div className="flex justify-end gap-1 mt-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleCopy(message.content, index)}
                           className="text-neutral-400 hover:text-white h-8"
+                          title="Copy to clipboard"
                         >
                           {copiedIndex === index ? (
                             <Check className="w-4 h-4" />
@@ -379,6 +444,17 @@ function GeneratePageContent() {
                             <Copy className="w-4 h-4" />
                           )}
                         </Button>
+                        {hasGeminiKey && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleGenerateImage(message.content)}
+                            className="text-blue-400 hover:text-blue-300 h-8"
+                            title="Generate image from this content"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -415,11 +491,31 @@ function GeneratePageContent() {
               )}
             </Button>
           </div>
-          <p className="text-xs text-neutral-500 mt-2">
-            Press ⌘+Enter to send
-          </p>
+          <div className="flex justify-between mt-2">
+            <p className="text-xs text-neutral-500">
+              Press ⌘+Enter to send
+            </p>
+            {!hasGeminiKey && (
+              <p className="text-xs text-neutral-500">
+                Add Gemini API key in{" "}
+                <a href="/settings" className="text-blue-500 hover:underline">
+                  Settings
+                </a>{" "}
+                to generate images
+              </p>
+            )}
+          </div>
         </div>
       </Card>
+
+      {/* Image Generation Dialog */}
+      <GenerateImageDialog
+        open={imageDialogOpen}
+        onOpenChange={setImageDialogOpen}
+        initialConcept={selectedConcept}
+        brandName={selectedBrand?.name}
+        onSaveToLibrary={handleSaveToLibrary}
+      />
     </div>
   );
 }
