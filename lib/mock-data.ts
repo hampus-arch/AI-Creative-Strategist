@@ -14,6 +14,7 @@ export interface MockBrand {
   description: string | null;
   websiteUrl: string | null;
   scrapedContent: string | null;
+  metaAdsLibraryUrl: string | null;
   createdAt: string;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,10 +40,11 @@ interface AddAdDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   brands: MockBrand[];
+  defaultBrandId?: string;
   onAdCreated: () => void;
 }
 
-export function AddAdDialog({ open, onOpenChange, brands, onAdCreated }: AddAdDialogProps) {
+export function AddAdDialog({ open, onOpenChange, brands, defaultBrandId, onAdCreated }: AddAdDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState("upload");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +54,7 @@ export function AddAdDialog({ open, onOpenChange, brands, onAdCreated }: AddAdDi
   const [imageData, setImageData] = useState<string>("");
   const [metaUrl, setMetaUrl] = useState("");
   const [brandName, setBrandName] = useState("");
-  const [selectedBrandId, setSelectedBrandId] = useState("");
+  const [selectedBrandId, setSelectedBrandId] = useState(defaultBrandId || "");
   const [adCopy, setAdCopy] = useState("");
   const [hook, setHook] = useState("");
   const [cta, setCta] = useState("");
@@ -63,11 +64,18 @@ export function AddAdDialog({ open, onOpenChange, brands, onAdCreated }: AddAdDi
   const [tagInput, setTagInput] = useState("");
   const [aiAnalysis, setAiAnalysis] = useState("");
 
+  // Update selectedBrandId when defaultBrandId changes
+  useEffect(() => {
+    if (defaultBrandId) {
+      setSelectedBrandId(defaultBrandId);
+    }
+  }, [defaultBrandId, open]);
+
   const resetForm = () => {
     setImageData("");
     setMetaUrl("");
     setBrandName("");
-    setSelectedBrandId("");
+    setSelectedBrandId(defaultBrandId || "");
     setAdCopy("");
     setHook("");
     setCta("");

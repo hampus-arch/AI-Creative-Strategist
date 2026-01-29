@@ -22,13 +22,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Building2, Globe, Loader2, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Building2, Globe, Loader2, Trash2, ExternalLink, Library } from "lucide-react";
 
 interface Brand {
   id: string;
   name: string;
   description: string | null;
   websiteUrl: string | null;
+  metaAdsLibraryUrl: string | null;
   createdAt: string;
 }
 
@@ -43,6 +44,7 @@ export default function BrandsPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [metaAdsLibraryUrl, setMetaAdsLibraryUrl] = useState("");
   const [scrapedContent, setScrapedContent] = useState("");
 
   useEffect(() => {
@@ -118,6 +120,7 @@ export default function BrandsPage() {
           description,
           websiteUrl,
           scrapedContent,
+          metaAdsLibraryUrl,
         }),
       });
 
@@ -163,6 +166,7 @@ export default function BrandsPage() {
     setName("");
     setDescription("");
     setWebsiteUrl("");
+    setMetaAdsLibraryUrl("");
     setScrapedContent("");
   };
 
@@ -227,6 +231,31 @@ export default function BrandsPage() {
                 </div>
                 <p className="text-xs text-neutral-500">
                   We&apos;ll extract key information from your website
+                </p>
+              </div>
+
+              {/* Meta Ads Library URL */}
+              <div className="space-y-2">
+                <Label className="text-neutral-300 flex items-center gap-2">
+                  <Library className="w-4 h-4 text-blue-500" />
+                  Meta Ads Library URL
+                </Label>
+                <Input
+                  placeholder="https://www.facebook.com/ads/library/?view_all_page_id=..."
+                  value={metaAdsLibraryUrl}
+                  onChange={(e) => setMetaAdsLibraryUrl(e.target.value)}
+                  className="bg-neutral-800 border-neutral-700 text-white"
+                />
+                <p className="text-xs text-neutral-500">
+                  Paste the Meta Ads Library link for this brand to track their ads.{" "}
+                  <a
+                    href="https://www.facebook.com/ads/library"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Find it here →
+                  </a>
                 </p>
               </div>
 
@@ -351,9 +380,23 @@ export default function BrandsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-neutral-400 line-clamp-2 mb-4">
+                <CardDescription className="text-neutral-400 line-clamp-2 mb-3">
                   {brand.description || "No description"}
                 </CardDescription>
+                
+                {/* Meta Ads Library Link */}
+                {brand.metaAdsLibraryUrl && (
+                  <a
+                    href={brand.metaAdsLibraryUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-xs text-blue-500 hover:text-blue-400 mb-3"
+                  >
+                    <Library className="w-3 h-3" />
+                    View in Meta Ads Library
+                  </a>
+                )}
+                
                 <Link href={`/generate?brand=${brand.id}`}>
                   <Button
                     variant="outline"

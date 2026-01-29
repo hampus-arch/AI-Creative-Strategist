@@ -15,7 +15,7 @@ export async function GET() {
 // POST create new brand
 export async function POST(req: NextRequest) {
   try {
-    const { name, description, websiteUrl, scrapedContent } = await req.json();
+    const { name, description, websiteUrl, scrapedContent, metaAdsLibraryUrl } = await req.json();
 
     if (!name) {
       return NextResponse.json({ error: "Brand name is required" }, { status: 400 });
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       description: description || null,
       websiteUrl: websiteUrl || null,
       scrapedContent: scrapedContent || null,
+      metaAdsLibraryUrl: metaAdsLibraryUrl || null,
     });
 
     return NextResponse.json({ brand });

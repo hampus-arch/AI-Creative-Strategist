@@ -28,6 +28,7 @@ import { AdCard } from "@/components/ad-card";
 import { AddAdDialog } from "@/components/add-ad-dialog";
 import { FRAMEWORK_PHASES, type FrameworkPhase } from "@/lib/framework";
 import { type SavedAd, type MockBrand } from "@/lib/mock-data";
+import { useSelectedBrand } from "@/lib/brand-context";
 import { cn } from "@/lib/utils";
 import {
   Plus,
@@ -36,23 +37,31 @@ import {
   Loader2,
   Sparkles,
   X,
+  ExternalLink,
 } from "lucide-react";
 
 export default function AdsPage() {
   const [ads, setAds] = useState<SavedAd[]>([]);
-  const [brands, setBrands] = useState<MockBrand[]>([]);
+  const [allBrands, setAllBrands] = useState<MockBrand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedAd, setSelectedAd] = useState<SavedAd | null>(null);
 
+  // Use global brand selection
+  const { selectedBrand, brands } = useSelectedBrand();
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhase, setSelectedPhase] = useState<string>("all");
-  const [selectedBrandId, setSelectedBrandId] = useState<string>("all");
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Update allBrands when context brands change
+  useEffect(() => {
+    setAllBrands(brands);
+  }, [brands]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -66,7 +75,7 @@ export default function AdsPage() {
       const brandsData = await brandsRes.json();
 
       setAds(adsData.ads || []);
-      setBrands(brandsData.brands || []);
+      setAllBrands(brandsData.brands || []);
     } catch {
       toast.error("Failed to load ads");
     } finally {
@@ -129,8 +138,13 @@ export default function AdsPage() {
     }
   };
 
-  // Filter ads
+  // Filter ads - use global brand selection
   const filteredAds = ads.filter((ad) => {
+    // Brand filter (from global selector)
+    if (selectedBrand && ad.brandId !== selectedBrand.id) {
+      return false;
+    }
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -147,18 +161,17 @@ export default function AdsPage() {
       return false;
     }
 
-    // Brand filter
-    if (selectedBrandId !== "all" && ad.brandId !== selectedBrandId) {
-      return false;
-    }
-
     return true;
   });
 
-  // Group ads by phase for overview
+  // Group ads by phase for overview (filtered by selected brand)
+  const adsForPhaseCount = selectedBrand 
+    ? ads.filter(ad => ad.brandId === selectedBrand.id)
+    : ads;
+    
   const adsByPhase = FRAMEWORK_PHASES.map((phase) => ({
     phase,
-    count: ads.filter((ad) => ad.frameworkPhase === phase.id).length,
+    count: adsForPhaseCount.filter((ad) => ad.frameworkPhase === phase.id).length,
   }));
 
   if (isLoading) {
@@ -177,18 +190,44 @@ export default function AdsPage() {
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <Library className="w-8 h-8 text-orange-500" />
             Ad Library
+            {selectedBrand && (
+              <Badge className="ml-2 bg-orange-500/20 text-orange-500 border-orange-500/50">
+                {selectedBrand.name}
+              </Badge>
+            )}
           </h1>
           <p className="text-neutral-400 mt-1">
-            Save and analyze ads for creative inspiration
+            {selectedBrand 
+              ? `Viewing ads for ${selectedBrand.name}`
+              : "Save and analyze ads for creative inspiration"
+            }
           </p>
         </div>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-orange-500 hover:bg-orange-600"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Ad
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Meta Ads Library Link for selected brand */}
+          {selectedBrand?.metaAdsLibraryUrl && (
+            <a
+              href={selectedBrand.metaAdsLibraryUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="outline"
+                className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open Meta Ads Library
+              </Button>
+            </a>
+          )}
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-orange-500 hover:bg-orange-600"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Ad
+          </Button>
+        </div>
       </div>
 
       {/* Phase Overview */}
@@ -264,36 +303,14 @@ export default function AdsPage() {
               </SelectContent>
             </Select>
 
-            {/* Brand Filter */}
-            <Select value={selectedBrandId} onValueChange={setSelectedBrandId}>
-              <SelectTrigger className="w-48 bg-neutral-800 border-neutral-700 text-white">
-                <SelectValue placeholder="All Brands" />
-              </SelectTrigger>
-              <SelectContent className="bg-neutral-800 border-neutral-700">
-                <SelectItem value="all" className="text-white">
-                  All Brands
-                </SelectItem>
-                {brands.map((brand) => (
-                  <SelectItem
-                    key={brand.id}
-                    value={brand.id}
-                    className="text-white"
-                  >
-                    {brand.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             {/* Clear Filters */}
-            {(searchQuery || selectedPhase !== "all" || selectedBrandId !== "all") && (
+            {(searchQuery || selectedPhase !== "all") && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedPhase("all");
-                  setSelectedBrandId("all");
                 }}
                 className="text-neutral-400"
               >
@@ -302,6 +319,27 @@ export default function AdsPage() {
               </Button>
             )}
           </div>
+
+          {/* Selected Brand Info */}
+          {selectedBrand && (
+            <div className="mt-3 pt-3 border-t border-neutral-800 flex items-center justify-between">
+              <p className="text-sm text-neutral-400">
+                Showing ads for <span className="text-white font-medium">{selectedBrand.name}</span>
+                {" "}• Use sidebar to switch brands
+              </p>
+              {selectedBrand.metaAdsLibraryUrl && (
+                <a
+                  href={selectedBrand.metaAdsLibraryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-500 hover:text-blue-400 flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Meta Ads Library
+                </a>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -311,20 +349,28 @@ export default function AdsPage() {
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Library className="w-16 h-16 text-neutral-600 mb-4" />
             <h3 className="text-xl font-medium text-white mb-2">
-              {ads.length === 0 ? "No ads saved yet" : "No ads match your filters"}
+              {ads.length === 0 
+                ? "No ads saved yet" 
+                : selectedBrand
+                  ? `No ads for ${selectedBrand.name}`
+                  : "No ads match your filters"
+              }
             </h3>
             <p className="text-neutral-400 text-center max-w-md mb-6">
               {ads.length === 0
                 ? "Start building your ad library by saving ads from Meta Ads Library or uploading screenshots."
-                : "Try adjusting your search or filters to find what you're looking for."}
+                : selectedBrand
+                  ? `Add some ads for ${selectedBrand.name} to track their creative strategy.`
+                  : "Try adjusting your search or filters to find what you're looking for."
+              }
             </p>
-            {ads.length === 0 && (
+            {(ads.length === 0 || selectedBrand) && (
               <Button
                 onClick={() => setIsAddDialogOpen(true)}
                 className="bg-orange-500 hover:bg-orange-600"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Your First Ad
+                {selectedBrand ? `Add Ad for ${selectedBrand.name}` : "Add Your First Ad"}
               </Button>
             )}
           </CardContent>
@@ -343,11 +389,12 @@ export default function AdsPage() {
         </div>
       )}
 
-      {/* Add Ad Dialog */}
+      {/* Add Ad Dialog - pass selected brand as default */}
       <AddAdDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        brands={brands}
+        brands={allBrands}
+        defaultBrandId={selectedBrand?.id}
         onAdCreated={fetchData}
       />
 
