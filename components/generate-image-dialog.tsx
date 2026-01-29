@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getApiKeysForRequest } from "@/lib/api-keys";
 import {
   Loader2,
   Download,
@@ -89,9 +90,13 @@ export function GenerateImageDialog({
     setGeneratedImage(null);
 
     try {
+      const apiHeaders = getApiKeysForRequest();
       const response = await fetch("/api/generate-image", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...apiHeaders,
+        },
         body: JSON.stringify({
           prompt,
           aspectRatio,

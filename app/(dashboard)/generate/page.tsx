@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { GenerateImageDialog } from "@/components/generate-image-dialog";
 import { addMockAd } from "@/lib/mock-data";
+import { getApiKeysForRequest } from "@/lib/api-keys";
 
 interface Brand {
   id: string;
@@ -151,9 +152,13 @@ function GeneratePageContent() {
     setIsLoading(true);
 
     try {
+      const apiHeaders = getApiKeysForRequest();
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...apiHeaders,
+        },
         body: JSON.stringify({
           messages: [...messages, userMessage],
           brandId: selectedBrandId,

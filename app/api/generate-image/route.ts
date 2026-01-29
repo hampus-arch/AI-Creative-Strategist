@@ -2,11 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMockSettings } from "@/lib/mock-data";
 import { generateImage, generateImageWithImagen, type AspectRatio, type ImageStyle } from "@/lib/gemini";
 
+// Helper to get Gemini API key from headers or fallback
+function getGeminiApiKey(req: NextRequest): string | null {
+  // Try header first (from localStorage)
+  const headerKey = req.headers.get("x-gemini-api-key");
+  if (headerKey) return headerKey;
+
+  // Fallback to mock settings
+  const settings = getMockSettings();
+  if (settings.geminiApiKey) return settings.geminiApiKey;
+
+  // Fallback to environment variable
+  return process.env.GEMINI_API_KEY || null;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const settings = getMockSettings();
+    const geminiApiKey = getGeminiApiKey(req);
 
-    if (!settings.geminiApiKey) {
+    if (!geminiApiKey) {
       return NextResponse.json(
         { error: "Gemini API key not configured. Please add your Gemini API key in Settings." },
         { status: 400 }
@@ -27,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Try Gemini 2.0 Flash first (has native image generation)
     try {
-      result = await generateImage(settings.geminiApiKey, {
+      result = await generateImage(geminiApiKey, {
         prompt,
         aspectRatio: aspectRatio as AspectRatio,
         style: style as ImageStyle,
@@ -41,7 +55,7 @@ export async function POST(req: NextRequest) {
     // If that fails, try Imagen 3
     if (!result) {
       try {
-        result = await generateImageWithImagen(settings.geminiApiKey, {
+        result = await generateImageWithImagen(geminiApiKey, {
           prompt,
           aspectRatio: aspectRatio as AspectRatio,
           style: style as ImageStyle,

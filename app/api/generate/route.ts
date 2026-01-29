@@ -4,11 +4,34 @@ import { createOpenAIClient } from "@/lib/openai";
 
 export const runtime = "nodejs";
 
+// Helper to get API key from headers or fallback
+function getApiKey(req: NextRequest): string | null {
+  // Try header first (from localStorage)
+  const headerKey = req.headers.get("x-openai-api-key");
+  if (headerKey) return headerKey;
+
+  // Fallback to mock settings
+  const settings = getMockSettings();
+  if (settings.apiKey) return settings.apiKey;
+
+  // Fallback to environment variable
+  return process.env.OPENAI_API_KEY || null;
+}
+
+// Helper to get preferred model
+function getPreferredModel(req: NextRequest): string {
+  const headerModel = req.headers.get("x-preferred-model");
+  if (headerModel) return headerModel;
+
+  const settings = getMockSettings();
+  return settings.preferredModel || "gpt-4o";
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const settings = getMockSettings();
+    const apiKey = getApiKey(req);
 
-    if (!settings.apiKey) {
+    if (!apiKey) {
       return new Response(JSON.stringify({ error: "API key not configured. Please add your OpenAI API key in Settings." }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -18,8 +41,8 @@ export async function POST(req: NextRequest) {
     const { messages, frameworkPhase, contentType } = await req.json();
 
     // Create OpenAI client with user's API key
-    const openai = createOpenAIClient(settings.apiKey);
-    const model = settings.preferredModel || "gpt-4o";
+    const openai = createOpenAIClient(apiKey);
+    const model = getPreferredModel(req);
 
     // System prompt based on framework
     const systemPrompt = `You are an expert AI Creative Strategist specialized in direct response marketing and the Orange Juice Creative Framework.

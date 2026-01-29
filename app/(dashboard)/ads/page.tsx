@@ -26,6 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { AdCard } from "@/components/ad-card";
 import { AddAdDialog } from "@/components/add-ad-dialog";
+import { BulkImportDialog } from "@/components/bulk-import-dialog";
 import { FRAMEWORK_PHASES, type FrameworkPhase } from "@/lib/framework";
 import { type SavedAd, type MockBrand } from "@/lib/mock-data";
 import { useSelectedBrand } from "@/lib/brand-context";
@@ -45,6 +46,7 @@ export default function AdsPage() {
   const [allBrands, setAllBrands] = useState<MockBrand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [selectedAd, setSelectedAd] = useState<SavedAd | null>(null);
 
   // Use global brand selection
@@ -221,6 +223,14 @@ export default function AdsPage() {
             </a>
           )}
           <Button
+            onClick={() => setIsBulkImportOpen(true)}
+            variant="outline"
+            className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+          >
+            <Library className="w-4 h-4 mr-2" />
+            Import from Meta
+          </Button>
+          <Button
             onClick={() => setIsAddDialogOpen(true)}
             className="bg-orange-500 hover:bg-orange-600"
           >
@@ -396,6 +406,13 @@ export default function AdsPage() {
         brands={allBrands}
         defaultBrandId={selectedBrand?.id}
         onAdCreated={fetchData}
+      />
+
+      {/* Bulk Import Dialog */}
+      <BulkImportDialog
+        open={isBulkImportOpen}
+        onOpenChange={setIsBulkImportOpen}
+        onImportComplete={fetchData}
       />
 
       {/* Ad Detail Dialog */}

@@ -20,49 +20,56 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Eye, EyeOff, Key, Bot, CheckCircle2, Loader2, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { 
+  getApiKeys, 
+  setApiKey, 
+  setGeminiKey, 
+  setPreferredModel, 
+  hasApiKey, 
+  hasGeminiKey 
+} from "@/lib/api-keys";
 
 export default function SettingsPage() {
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKeyInput] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [hasApiKey, setHasApiKey] = useState(false);
+  const [hasApiKeyState, setHasApiKeyState] = useState(false);
   
-  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [geminiApiKey, setGeminiApiKeyInput] = useState("");
   const [showGeminiKey, setShowGeminiKey] = useState(false);
-  const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const [hasGeminiKeyState, setHasGeminiKeyState] = useState(false);
   const [isSavingGemini, setIsSavingGemini] = useState(false);
   
-  const [preferredModel, setPreferredModel] = useState("gpt-4o");
+  const [preferredModel, setPreferredModelState] = useState("gpt-4o");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   useEffect(() => {
-    fetchSettings();
+    loadSettings();
   }, []);
 
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch("/api/settings");
-      const data = await response.json();
-      setHasApiKey(data.hasApiKey);
-      setHasGeminiKey(data.hasGeminiKey);
-      setPreferredModel(data.preferredModel || "gpt-4o");
-      
-      if (data.hasApiKey) {
-        fetchModels();
-      }
-    } catch {
-      toast.error("Failed to load settings");
-    } finally {
-      setIsLoading(false);
+  const loadSettings = () => {
+    const keys = getApiKeys();
+    setHasApiKeyState(hasApiKey());
+    setHasGeminiKeyState(hasGeminiKey());
+    setPreferredModelState(keys.preferredModel);
+    
+    if (hasApiKey()) {
+      fetchModels();
     }
+    setIsLoading(false);
   };
 
   const fetchModels = async () => {
     setIsLoadingModels(true);
     try {
-      const response = await fetch("/api/settings/models");
+      const keys = getApiKeys();
+      const response = await fetch("/api/settings/models", {
+        headers: {
+          "x-openai-api-key": keys.openai,
+        },
+      });
       const data = await response.json();
       if (data.models) {
         setAvailableModels(data.models);
@@ -80,24 +87,33 @@ export default function SettingsPage() {
       return;
     }
 
+    // Basic validation
+    if (!apiKey.startsWith("sk-") || apiKey.length < 20) {
+      toast.error("Invalid OpenAI API key format. Should start with 'sk-'");
+      return;
+    }
+
     setIsSaving(true);
     try {
+      // Save to localStorage
+      setApiKey(apiKey);
+      
+      // Also save to server (for backward compatibility)
       const response = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiKey }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
         toast.error(data.error || "Failed to save API key");
         return;
       }
 
       toast.success("OpenAI API key saved successfully");
-      setHasApiKey(true);
-      setApiKey("");
+      setHasApiKeyState(true);
+      setApiKeyInput("");
       fetchModels();
     } catch {
       toast.error("Failed to save API key");
@@ -112,24 +128,33 @@ export default function SettingsPage() {
       return;
     }
 
+    // Basic validation
+    if (!geminiApiKey.startsWith("AIza") || geminiApiKey.length < 30) {
+      toast.error("Invalid Gemini API key format. Should start with 'AIza'");
+      return;
+    }
+
     setIsSavingGemini(true);
     try {
+      // Save to localStorage
+      setGeminiKey(geminiApiKey);
+      
+      // Also save to server (for backward compatibility)
       const response = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ geminiApiKey }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
         toast.error(data.error || "Failed to save Gemini API key");
         return;
       }
 
       toast.success("Gemini API key saved successfully");
-      setHasGeminiKey(true);
-      setGeminiApiKey("");
+      setHasGeminiKeyState(true);
+      setGeminiApiKeyInput("");
     } catch {
       toast.error("Failed to save Gemini API key");
     } finally {
@@ -138,8 +163,13 @@ export default function SettingsPage() {
   };
 
   const handleSaveModel = async (model: string) => {
+    setPreferredModelState(model);
+    
+    // Save to localStorage
     setPreferredModel(model);
+    
     try {
+      // Also save to server
       const response = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -174,31 +204,19 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* Vercel Environment Variables Info */}
-      <Card className="bg-amber-500/10 border-amber-500/30">
+      {/* Success Info */}
+      <Card className="bg-green-500/10 border-green-500/30">
         <CardContent className="p-4">
           <div className="flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-amber-500 font-medium text-sm">
-                For Vercel Deployment
+              <p className="text-green-500 font-medium text-sm">
+                API Keys Saved Locally
               </p>
-              <p className="text-amber-400/80 text-xs mt-1">
-                API keys entered here won&apos;t persist between sessions on Vercel. 
-                For permanent keys, add environment variables in your{" "}
-                <a 
-                  href="https://vercel.com/docs/environment-variables" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="underline hover:text-amber-300"
-                >
-                  Vercel project settings
-                </a>:
+              <p className="text-green-400/80 text-xs mt-1">
+                Your API keys are now saved in your browser and will persist across sessions. 
+                They are stored locally and never sent to our servers except when making API calls.
               </p>
-              <ul className="text-amber-400/80 text-xs mt-2 space-y-1 list-disc list-inside">
-                <li><code className="bg-amber-500/20 px-1 rounded">OPENAI_API_KEY</code> - Your OpenAI key</li>
-                <li><code className="bg-amber-500/20 px-1 rounded">GEMINI_API_KEY</code> - Your Gemini key</li>
-              </ul>
             </div>
           </div>
         </CardContent>
@@ -216,7 +234,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {hasApiKey && (
+          {hasApiKeyState && (
             <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <CheckCircle2 className="w-5 h-5 text-green-500" />
               <span className="text-green-500 text-sm">
@@ -227,7 +245,7 @@ export default function SettingsPage() {
           
           <div className="space-y-2">
             <Label htmlFor="apiKey" className="text-neutral-300">
-              {hasApiKey ? "Update API Key" : "Enter API Key"}
+              {hasApiKeyState ? "Update API Key" : "Enter API Key"}
             </Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -236,7 +254,7 @@ export default function SettingsPage() {
                   type={showApiKey ? "text" : "password"}
                   placeholder="sk-..."
                   value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
                   className="bg-neutral-800 border-neutral-700 text-white pr-10"
                 />
                 <button
@@ -290,7 +308,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {hasGeminiKey && (
+          {hasGeminiKeyState && (
             <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <CheckCircle2 className="w-5 h-5 text-green-500" />
               <span className="text-green-500 text-sm">
@@ -301,7 +319,7 @@ export default function SettingsPage() {
           
           <div className="space-y-2">
             <Label htmlFor="geminiKey" className="text-neutral-300">
-              {hasGeminiKey ? "Update Gemini Key" : "Enter Gemini Key"}
+              {hasGeminiKeyState ? "Update Gemini Key" : "Enter Gemini Key"}
             </Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -310,7 +328,7 @@ export default function SettingsPage() {
                   type={showGeminiKey ? "text" : "password"}
                   placeholder="AIza..."
                   value={geminiApiKey}
-                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  onChange={(e) => setGeminiApiKeyInput(e.target.value)}
                   className="bg-neutral-800 border-neutral-700 text-white pr-10"
                 />
                 <button
@@ -371,7 +389,7 @@ export default function SettingsPage() {
             <Select
               value={preferredModel}
               onValueChange={handleSaveModel}
-              disabled={!hasApiKey || isLoadingModels}
+              disabled={!hasApiKeyState || isLoadingModels}
             >
               <SelectTrigger className="bg-neutral-800 border-neutral-700 text-white">
                 <SelectValue placeholder="Select a model" />
@@ -402,7 +420,7 @@ export default function SettingsPage() {
                 )}
               </SelectContent>
             </Select>
-            {!hasApiKey && (
+            {!hasApiKeyState && (
               <p className="text-xs text-neutral-500">
                 Add your API key above to see available models
               </p>

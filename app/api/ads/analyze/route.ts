@@ -2,11 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMockSettings } from "@/lib/mock-data";
 import { createOpenAIClient } from "@/lib/openai";
 
+// Helper to get API key from headers or fallback
+function getApiKey(req: NextRequest): string | null {
+  const headerKey = req.headers.get("x-openai-api-key");
+  if (headerKey) return headerKey;
+
+  const settings = getMockSettings();
+  if (settings.apiKey) return settings.apiKey;
+
+  return process.env.OPENAI_API_KEY || null;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const settings = getMockSettings();
+    const apiKey = getApiKey(req);
 
-    if (!settings.apiKey) {
+    if (!apiKey) {
       return NextResponse.json(
         { error: "API key not configured. Please add your OpenAI API key in Settings." },
         { status: 400 }
@@ -22,7 +33,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const openai = createOpenAIClient(settings.apiKey);
+    const openai = createOpenAIClient(apiKey);
 
     const messages: Array<{
       role: "user";
