@@ -1,36 +1,165 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Orange Juice Creative Strategist
+
+AI-powered creative strategy tool based on the **Orange Juice Creative Framework**. Generate winning ad content for Facebook and other platforms using the systematic creative intelligence approach.
+
+## Features
+
+- **OpenAI Integration**: Connect your own API key and select from available models
+- **Brand Management**: Add brands with automatic website scraping for content extraction
+- **Orange Juice Framework**: Full implementation of the 5-phase framework:
+  - **INTERRUPT** (60%): Problem/Product awareness
+  - **EXPLAIN** (20%): Clarity, Education, Differentiation
+  - **OVERCOME** (15%): Objection handling & Trust building
+  - **PUSH** (5%): Conversion activation
+  - **REENFORCE**: Retention & Advocacy
+- **AI Content Generation**: Generate hooks, scripts, angles, and more with streaming responses
+- **Prompt Templates**: Pre-built prompts for each phase based on direct response marketing principles
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Database**: PostgreSQL + Prisma ORM
+- **Authentication**: NextAuth.js
+- **AI**: OpenAI API
+- **Hosting**: Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+
+- PostgreSQL database
+- OpenAI API key
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd jakobs-content-maskin
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit `.env` with your values:
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/jakobs_content_maskin?schema=public"
 
-## Learn More
+# NextAuth
+NEXTAUTH_SECRET="your-secret-key-change-in-production"
+NEXTAUTH_URL="http://localhost:3000"
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Set up the database:
+```bash
+npx prisma migrate dev --name init
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Run the development server:
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-## Deploy on Vercel
+## Deploying to Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1. Set up a PostgreSQL database
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+You can use:
+- [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)
+- [Neon](https://neon.tech)
+- [Supabase](https://supabase.com)
+- Any other PostgreSQL provider
+
+### 2. Deploy to Vercel
+
+1. Push your code to GitHub/GitLab/Bitbucket
+
+2. Import the project in Vercel:
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Select your repository
+   - Configure environment variables:
+
+   ```
+   DATABASE_URL=your-postgresql-url
+   NEXTAUTH_SECRET=your-generated-secret
+   NEXTAUTH_URL=https://your-domain.vercel.app
+   ```
+
+3. Deploy!
+
+### 3. Run database migrations
+
+After deployment, run migrations:
+```bash
+npx prisma migrate deploy
+```
+
+Or use Vercel's build command:
+```json
+{
+  "buildCommand": "prisma generate && prisma migrate deploy && next build"
+}
+```
+
+## Project Structure
+
+```
+├── app/
+│   ├── (auth)/           # Login/Register pages
+│   ├── (dashboard)/      # Protected dashboard pages
+│   │   ├── page.tsx      # Framework overview
+│   │   ├── brands/       # Brand management
+│   │   ├── generate/     # AI content generation
+│   │   └── settings/     # API settings
+│   └── api/              # API routes
+├── components/
+│   ├── ui/               # shadcn/ui components
+│   ├── sidebar.tsx       # Navigation sidebar
+│   ├── framework-pipeline.tsx
+│   └── phase-card.tsx
+├── lib/
+│   ├── auth.ts           # NextAuth configuration
+│   ├── db.ts             # Prisma client
+│   ├── framework.ts      # Framework data & prompts
+│   ├── openai.ts         # OpenAI utilities
+│   └── scraper.ts        # Website scraper
+└── prisma/
+    └── schema.prisma     # Database schema
+```
+
+## Orange Juice Framework
+
+The app is built around the Orange Juice Creative Framework which divides the customer journey into 5 phases:
+
+| Phase | Goal | Content % |
+|-------|------|-----------|
+| INTERRUPT | Problem/Product awareness | 60% |
+| EXPLAIN | Clarity, Education, Differentiation | 20% |
+| OVERCOME | Objection handling & Trust | 15% |
+| PUSH | Conversion activation | 5% |
+| REENFORCE | Retention & Advocacy | Post-purchase |
+
+Each phase has specific:
+- **Psychology triggers** to leverage
+- **Creative formats** that work best
+- **Messaging examples** to inspire content
+
+## License
+
+Private - All rights reserved
+
+## Credits
+
+Based on the Orange Juice Creative Framework by Bagliora.

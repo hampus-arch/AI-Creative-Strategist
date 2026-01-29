@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  email                 String             @unique
+  password              String
+  name                  String?
+  openaiApiKey          String?            @map("openai_api_key")
+  preferredModel        String?            @default("gpt-4o") @map("preferred_model")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  
+  brands                Brand[]
+  generatedContent      GeneratedContent[]
+  customPrompts         CustomPrompt[]
+
+  @@map("users")
+}
+
+model Brand {
+  id                String             @id @default(cuid())
+  userId            String             @map("user_id")
+  name              String
+  description       String?            @db.Text
+  websiteUrl        String?            @map("website_url")
+  scrapedContent    String?            @db.Text @map("scraped_content")
+  targetAudience    Json?              @map("target_audience")
+  painPoints        Json?              @map("pain_points")
+  uniqueSellingPoints Json?            @map("unique_selling_points")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generatedContent  GeneratedContent[]
+
+  @@map("brands")
+}
+
+model GeneratedContent {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  brandId         String    @map("brand_id")
+  frameworkPhase  String    @map("framework_phase")
+  contentType     String    @map("content_type")
+  messages        Json
+  output          String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand           Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@map("generated_content")
+}
+
+model CustomPrompt {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  frameworkPhase  String    @map("framework_phase")
+  title           String
+  content         String    @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("custom_prompts")
+}
