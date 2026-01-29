@@ -10,11 +10,13 @@ import {
   Building2,
   Sparkles,
   Settings,
+  Library,
 } from "lucide-react";
 
 const navigation = [
   { name: "Framework", href: "/", icon: LayoutDashboard },
   { name: "Brands", href: "/brands", icon: Building2 },
+  { name: "Ad Library", href: "/ads", icon: Library },
   { name: "Generate", href: "/generate", icon: Sparkles },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
